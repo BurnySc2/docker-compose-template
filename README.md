@@ -11,4 +11,7 @@ Start with:
 docker-compose up --build
 ```
 
+Inspect a docker container by attaching to it interactively:
+``` 
 docker-compose exec -it containername
+```
