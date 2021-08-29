@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  # https://github.com/khezen/compose-postgres
+  postgres:
+    container_name: postgres_container
+    build: ./dockerfiles/postgres/
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - my_network
+    # Disable logging for this container
+    logging:
+      driver: "none"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # https://github.com/khezen/compose-postgres
+  pgadmin:
+    container_name: pgadmin_container
+    build: ./dockerfiles/pgadmin/
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - my_network
+    restart: unless-stopped
+    logging:
+      driver: "none"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgres
+
+  # https://documentation.portainer.io/v2.0/deploy/ceinstalldocker/
+  portainer:
+    container_name: portainer_container
+    image: portainer/portainer-ce:2.6.3-alpine
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    logging:
+      driver: "none"
+    restart: unless-stopped
+
+  myscript:
+    container_name: python_script_container
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/python/Dockerfile
+    networks:
+      - my_network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "python", "-c", "print(1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+    # Postgres data will be stored under /var/lib/docker/volumes
+    postgres:
+    pgadmin:
+    # https://stackoverflow.com/a/52815759
+    # With this solution, there don't seem to be permission errors and the volume is mounted in a local folder relative to docker-compose file
+#      driver: local
+#      driver_opts:
+#        type: none
+#        o: bind
+#        device: ./data/pgadmin
