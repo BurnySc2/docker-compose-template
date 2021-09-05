@@ -8,13 +8,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [ubuntu-latest]
         python-version: [3.9]
 
     steps:
-      - name: Check Out Repo
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Build images
         run: |
           docker-compose build
+
+      - name: Start containers
+        run: |
+          docker-compose up
