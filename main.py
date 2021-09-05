@@ -33,8 +33,7 @@ def main():
             time.sleep(2)
 
     with Session(engine) as session:
-        session.add(hero_1)
-        session.add(hero_2)
+        session.add_all([hero_1, hero_2])
         session.add(hero_3)
         session.commit()
 
