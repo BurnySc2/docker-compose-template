@@ -24,7 +24,7 @@ def main():
     host_name = "postgres" if os.environ.get("IS_INSIDE_DOCKER") else "localhost"
     url = URL.create(drivername="postgresql", username="postgres", password="changeme", host=host_name, port=5432)
     engine = create_engine(url)
-    for i in range(5):
+    for _ in range(5):
         try:
             SQLModel.metadata.create_all(engine)
             break
